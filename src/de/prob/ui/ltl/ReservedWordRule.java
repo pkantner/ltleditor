@@ -7,6 +7,8 @@ import org.eclipse.jface.text.rules.IPredicateRule;
 import org.eclipse.jface.text.rules.IToken;
 import org.eclipse.jface.text.rules.Token;
 
+import de.prob.ui.ltl.util.CharacterScannerReader;
+
 public class ReservedWordRule implements IPredicateRule {
 
 	private List<String> allowedCharacterSequences;
@@ -22,23 +24,21 @@ public class ReservedWordRule implements IPredicateRule {
 
 	@Override
 	public IToken evaluate(ICharacterScanner scanner) {
-		Reader reader = new Reader(scanner);
-		boolean wordFound = false;
+		CharacterScannerReader reader = new CharacterScannerReader(scanner);
 
+		reader.savePosition();
 		if (word.charAt(0) == reader.peek()) {
-			if (checkSeqBefore(reader)) {
-				String readWord = reader.read(word.length());
-
-				if (word.equals(readWord)) {
-					wordFound = checkSeqAfter(reader);
+			String readWord = reader.readString(word.length());
+			if (word.equals(readWord)) {
+				if (checkSeqAfter(reader)) {
+					if (checkSeqBefore(reader)) {
+						reader.jump(word.length());
+						return token;
+					}
 				}
 			}
 		}
-
-		if (wordFound) {
-			return token;
-		}
-		reader.unreadAll();
+		reader.resetPosition();
 		return Token.UNDEFINED;
 	}
 
@@ -52,31 +52,30 @@ public class ReservedWordRule implements IPredicateRule {
 		return evaluate(scanner);
 	}
 
-	boolean checkSeqBefore(Reader reader) {
+	boolean checkSeqBefore(CharacterScannerReader reader) {
 		if (allowedCharacterSequences == null) {
 			return true;
 		}
+		reader.resetPosition();
 		if (reader.isBOF()) {
 			return true;
 		}
 		for (String seq : allowedCharacterSequences) {
 			int n = seq.length();
+			reader.resetPosition();
 
-			int unread = reader.unread(n);
-			if (n == unread) {
-				String before = reader.read(n);
+			if (-n == reader.jump(-n)) {
+				String before = reader.readString(n);
 				if (seq.equals(before)) {
 					return true;
 				}
-			} else {
-				reader.read(unread);
 			}
 		}
 
 		return false;
 	}
 
-	boolean checkSeqAfter(Reader reader) {
+	boolean checkSeqAfter(CharacterScannerReader reader) {
 		if (allowedCharacterSequences == null) {
 			return true;
 		}
@@ -86,81 +85,16 @@ public class ReservedWordRule implements IPredicateRule {
 		for (String seq : allowedCharacterSequences) {
 			int n = seq.length();
 
-			String after = reader.read(n);
-			reader.unread(n);
-			if (seq.equals(after)) {
-				return true;
+			String after = reader.readString(n);
+			if (after != null) {
+				reader.jump(-n);
+				if (seq.equals(after)) {
+					return true;
+				}
 			}
 		}
 
 		return false;
-	}
-
-	class Reader {
-		public static final int BOF = -2;
-		public static final int EOF = ICharacterScanner.EOF;
-
-		private final ICharacterScanner scanner;
-		private int readCount = 0;
-
-		Reader(ICharacterScanner scanner) {
-			this.scanner = scanner;
-		}
-
-		int peek() {
-			int c = scanner.read();
-			scanner.unread();
-			return c;
-		}
-
-		String read(int count) {
-			StringBuilder builder = new StringBuilder();
-			int c = 0;
-			for (int i = 0; i < count && c != EOF; i++) {
-				c = scanner.read();
-				if (c != EOF) {
-					builder.append((char) c);
-				}
-			}
-
-			if (builder.length() != count) {
-				int length = builder.length();
-				while (length-- > 0) {
-					scanner.unread();
-				}
-				return null;
-			}
-			readCount += count;
-			return builder.toString();
-		}
-
-		int unread(int count) {
-			int unread = 0;
-			while (count-- > 0 && scanner.getColumn() > 0) {
-				scanner.unread();
-				readCount--;
-				unread++;
-			}
-			return unread;
-		}
-
-		void unreadAll() {
-			while (readCount-- > 0) {
-				scanner.unread();
-			}
-			readCount = 0;
-		}
-
-		boolean isBOF() {
-			return scanner.getColumn() == 0;
-		}
-
-		boolean isEOF() {
-			boolean eof = scanner.read() == EOF;
-			scanner.unread();
-			return eof;
-		}
-
 	}
 
 }
