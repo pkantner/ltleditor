@@ -1,5 +1,6 @@
 package de.prob.ui.ltl;
 
+import org.eclipse.jface.text.reconciler.MonoReconciler;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -19,6 +20,7 @@ public class LtlCheckingView extends ViewPart {
 		formulaTextViewer = new FormulaTextViewer(container);
 		formulaTextViewer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		formulaTextViewer.setPartitionScanner(new LtlScanner());
+		formulaTextViewer.setReconciler(new MonoReconciler(new LtlReconcilingStrategy(formulaTextViewer), false));
 		formulaTextViewer.setText("true and false");
 	}
 

@@ -1,12 +1,14 @@
 package de.prob.ui.ltl;
 
 import org.eclipse.jface.text.presentation.IPresentationReconciler;
+import org.eclipse.jface.text.reconciler.IReconciler;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
 
 public class BaseSourceViewerConfiguration extends SourceViewerConfiguration {
 
 	private AbstractPartitionScanner scanner;
+	private IReconciler reconciler;
 
 	@Override
 	public String[] getConfiguredContentTypes(ISourceViewer sourceViewer) {
@@ -33,6 +35,11 @@ public class BaseSourceViewerConfiguration extends SourceViewerConfiguration {
 		return scanner.getPresentationReconciler(sourceViewer);
 	}
 
+	@Override
+	public IReconciler getReconciler(ISourceViewer sourceViewer) {
+		return reconciler;
+	}
+
 	public AbstractPartitionScanner getScanner() {
 		return scanner;
 	}
@@ -40,4 +47,9 @@ public class BaseSourceViewerConfiguration extends SourceViewerConfiguration {
 	public void setScanner(AbstractPartitionScanner scanner) {
 		this.scanner = scanner;
 	}
+
+	public void setReconciler(IReconciler reconciler) {
+		this.reconciler = reconciler;
+	}
+
 }

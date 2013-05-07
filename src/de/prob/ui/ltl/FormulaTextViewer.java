@@ -4,6 +4,7 @@ import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentExtension3;
 import org.eclipse.jface.text.IDocumentPartitioner;
+import org.eclipse.jface.text.reconciler.IReconciler;
 import org.eclipse.jface.text.rules.FastPartitioner;
 import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.swt.SWT;
@@ -61,6 +62,12 @@ public class FormulaTextViewer {
 		return config;
 	}
 
+	public void setReconciler(IReconciler reconciler) {
+		config.setReconciler(reconciler);
+		sourceViewer.unconfigure();
+		sourceViewer.configure(config);
+	}
+
 	public void setLayoutData(Object layoutData) {
 		sourceViewer.getTextWidget().setLayoutData(layoutData);
 	}
@@ -71,6 +78,10 @@ public class FormulaTextViewer {
 
 	public void setText(String text) {
 		document.set(text);
+	}
+
+	public String getText() {
+		return document.get();
 	}
 
 	public IDocument getDocument() {
