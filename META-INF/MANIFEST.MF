@@ -7,7 +7,8 @@ Bundle-Activator: de.prob.ui.ltleditor.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.jface.text;bundle-version="3.7.2",
- org.junit
+ org.junit,
+ org.eclipse.ui.editors;bundle-version="3.7.0"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ClassPath: .,
