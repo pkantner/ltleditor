@@ -32,7 +32,9 @@ public class ReservedWordRule implements IPredicateRule {
 			if (word.equals(readWord)) {
 				if (checkSeqAfter(reader)) {
 					if (checkSeqBefore(reader)) {
-						reader.jump(word.length());
+						if (allowedCharacterSequences != null) {
+							reader.jump(word.length());
+						}
 						return token;
 					}
 				}
