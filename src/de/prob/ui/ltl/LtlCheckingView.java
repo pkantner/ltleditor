@@ -8,6 +8,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.part.ViewPart;
 
 import de.prob.ui.ltl.annotation.ErrorAnnotation;
+import de.prob.ui.ltl.annotation.WarningAnnotation;
 
 public class LtlCheckingView extends ViewPart {
 
@@ -27,6 +28,7 @@ public class LtlCheckingView extends ViewPart {
 		formulaTextViewer.setText("true and false");
 
 		formulaTextViewer.registerAnnotationType(ErrorAnnotation.getAnnotationTypeInfo());
+		formulaTextViewer.registerAnnotationType(WarningAnnotation.getAnnotationTypeInfo());
 	}
 
 	@Override

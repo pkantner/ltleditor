@@ -1,22 +1,26 @@
 package de.prob.ui.ltl;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.reconciler.DirtyRegion;
 import org.eclipse.jface.text.reconciler.IReconcilingStrategy;
 import org.eclipse.jface.text.reconciler.IReconcilingStrategyExtension;
 
 import de.prob.ltl.parser.LtlLexer;
 import de.prob.ltl.parser.LtlParser;
-import de.prob.ltl.parser.symbolcheck.SymbolChecker;
-import de.prob.ltl.parser.symbolcheck.SymbolCollector;
-import de.prob.ltl.parser.symboltable.SymbolTable;
-import de.prob.ltl.parser.warning.ErrorManager;
+import de.prob.ltl.parser.ParserFactory;
+import de.prob.ltl.parser.symboltable.Symbol;
+import de.prob.ltl.parser.warning.WarningListener;
+import de.prob.ui.ltl.annotation.ErrorAnnotation;
+import de.prob.ui.ltl.annotation.WarningAnnotation;
 
 public class LtlReconcilingStrategy implements IReconcilingStrategy, IReconcilingStrategyExtension {
 
@@ -39,12 +43,8 @@ public class LtlReconcilingStrategy implements IReconcilingStrategy, IReconcilin
 	@Override
 	public void reconcile(IRegion region) {
 		String input = textViewer.getText();
-		System.out.println("reconcile/1: " + input);
-		try {
-			parse(input);
-		} catch(Exception ex) {
-			System.err.println(ex.getMessage());
-		}
+		textViewer.getAnnotationModel().removeAllAnnotations();
+		parse(input);
 	}
 
 	@Override
@@ -58,26 +58,76 @@ public class LtlReconcilingStrategy implements IReconcilingStrategy, IReconcilin
 	}
 
 	protected void parse(String input) {
-		final LtlParser parser = createParser(input);
-		ParseTree result = parser.start();
+		LtlLexer lexer = ParserFactory.createLtlLexer(input);
+		lexer.removeErrorListeners();
+		lexer.addErrorListener(new BaseErrorListener() {
 
-		// Check symbols
-		ErrorManager errorManager = new ErrorManager();
-		SymbolTable symbolTable = new SymbolTable(errorManager);
-		ParseTreeWalker walker = new ParseTreeWalker();
-		walker.walk(new SymbolCollector(symbolTable), result);
-		walker.walk(new SymbolChecker(symbolTable), result);
-	}
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer,
+					Object offendingSymbol, int line, int charPositionInLine,
+					String msg, RecognitionException e) {
+				System.out.println("Lexer error: " + msg);
 
-	protected LtlLexer createLexer(String input) {
-		ANTLRInputStream inputStream = new ANTLRInputStream(input);
-		LtlLexer lexer = new LtlLexer(inputStream);
-		return lexer;
-	}
+				int offset = charPositionInLine;
+				int length = 1;
+				try {
+					offset += textViewer.getSourceViewer().getDocument().getLineOffset(line);
+				} catch (BadLocationException ex) {
+				}
+				if (offendingSymbol instanceof Token) {
+					Token token = (Token) offendingSymbol;
+					length = token.getStopIndex() - token.getStartIndex() + 1;
+				}
+				textViewer.getAnnotationModel().addAnnotation(new ErrorAnnotation(msg), new Position(offset, length));
+			}
 
-	protected LtlParser createParser(String input) {
-		LtlParser parser = new LtlParser(new CommonTokenStream(createLexer(input)));
-		return parser;
+		});
+		LtlParser parser = ParserFactory.createLtlParser(lexer);
+		parser.removeErrorListeners();
+		parser.addErrorListener(new BaseErrorListener() {
+
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer,
+					Object offendingSymbol, int line, int charPositionInLine,
+					String msg, RecognitionException e) {
+				System.out.println("Parser error: " + msg + " " + offendingSymbol);
+
+				int offset = charPositionInLine;
+				int length = 1;
+				try {
+					offset += textViewer.getSourceViewer().getDocument().getLineOffset(line);
+				} catch (BadLocationException ex) {
+				}
+				if (offendingSymbol instanceof Token) {
+					Token token = (Token) offendingSymbol;
+					length = token.getStopIndex() - token.getStartIndex() + 1;
+					if (length == 0) {
+						offset = Math.max(0, --offset);
+						length = 1;
+					}
+				}
+				textViewer.getAnnotationModel().addAnnotation(new ErrorAnnotation(msg), new Position(offset, length));
+			}
+
+		});
+		parser.addWarningListener(new WarningListener() {
+
+			@Override
+			public void warning(String msg, Symbol... symbols) {
+				System.out.println("Parser warning: " + msg);
+				for (Symbol symbol : symbols) {
+					Token token = symbol.getToken();
+					int offset = token.getStartIndex();
+					int length = token.getStopIndex() - offset + 1;
+					textViewer.getAnnotationModel().addAnnotation(new WarningAnnotation(msg), new Position(offset, Math.max(1, length)));
+				}
+			}
+
+		});
+
+		ParseTree ast = parser.start();
+		parser.semanticCheck(ast);
+		System.out.println("--------------------------------------------------------------");
 	}
 
 }
