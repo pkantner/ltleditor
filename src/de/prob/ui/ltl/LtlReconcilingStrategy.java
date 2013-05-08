@@ -57,69 +57,61 @@ public class LtlReconcilingStrategy implements IReconcilingStrategy, IReconcilin
 		// IGNORE
 	}
 
+	protected Position getAnnotationPosition(Token token, int line, int posInLine) {
+		int offset = 0;
+		int length = 0;
+		if (token != null) {
+			offset = token.getStartIndex();
+			length = token.getStopIndex() - offset + 1;
+		} else {
+			try {
+				offset = textViewer.getSourceViewer().getDocument().getLineOffset(line) + posInLine;
+				length = 1;
+			} catch (BadLocationException ex) {
+			}
+		}
+
+		if (length < 1) {
+			length = 1;
+			offset--;
+		}
+
+		return new Position(Math.max(0, offset), length);
+	}
+
 	protected void parse(String input) {
 		LtlLexer lexer = ParserFactory.createLtlLexer(input);
-		lexer.removeErrorListeners();
-		lexer.addErrorListener(new BaseErrorListener() {
-
-			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer,
-					Object offendingSymbol, int line, int charPositionInLine,
-					String msg, RecognitionException e) {
-				System.out.println("Lexer error: " + msg);
-
-				int offset = charPositionInLine;
-				int length = 1;
-				try {
-					offset += textViewer.getSourceViewer().getDocument().getLineOffset(line);
-				} catch (BadLocationException ex) {
-				}
-				if (offendingSymbol instanceof Token) {
-					Token token = (Token) offendingSymbol;
-					length = token.getStopIndex() - token.getStartIndex() + 1;
-				}
-				textViewer.getAnnotationModel().addAnnotation(new ErrorAnnotation(msg), new Position(offset, length));
-			}
-
-		});
 		LtlParser parser = ParserFactory.createLtlParser(lexer);
+		lexer.removeErrorListeners();
 		parser.removeErrorListeners();
-		parser.addErrorListener(new BaseErrorListener() {
-
+		BaseErrorListener listener = new BaseErrorListener() {
 			@Override
 			public void syntaxError(Recognizer<?, ?> recognizer,
 					Object offendingSymbol, int line, int charPositionInLine,
 					String msg, RecognitionException e) {
-				System.out.println("Parser error: " + msg + " " + offendingSymbol);
+				System.out.println("Error: " + msg);
 
-				int offset = charPositionInLine;
-				int length = 1;
-				try {
-					offset += textViewer.getSourceViewer().getDocument().getLineOffset(line);
-				} catch (BadLocationException ex) {
+				Token token = null;
+				if (offendingSymbol != null && offendingSymbol instanceof Token) {
+					token = (Token) offendingSymbol;
 				}
-				if (offendingSymbol instanceof Token) {
-					Token token = (Token) offendingSymbol;
-					length = token.getStopIndex() - token.getStartIndex() + 1;
-					if (length == 0) {
-						offset = Math.max(0, --offset);
-						length = 1;
-					}
-				}
-				textViewer.getAnnotationModel().addAnnotation(new ErrorAnnotation(msg), new Position(offset, length));
+				Position pos = getAnnotationPosition(token, line, charPositionInLine);
+				textViewer.getAnnotationModel().addAnnotation(new ErrorAnnotation(msg), pos);
 			}
 
-		});
+		};
+		lexer.addErrorListener(listener);
+		parser.addErrorListener(listener);
 		parser.addWarningListener(new WarningListener() {
 
 			@Override
 			public void warning(String msg, Symbol... symbols) {
-				System.out.println("Parser warning: " + msg);
+				System.out.println("Warning: " + msg);
 				for (Symbol symbol : symbols) {
 					Token token = symbol.getToken();
-					int offset = token.getStartIndex();
-					int length = token.getStopIndex() - offset + 1;
-					textViewer.getAnnotationModel().addAnnotation(new WarningAnnotation(msg), new Position(offset, Math.max(1, length)));
+
+					Position pos = getAnnotationPosition(token, 0, 0);
+					textViewer.getAnnotationModel().addAnnotation(new WarningAnnotation(msg), pos);
 				}
 			}
 
