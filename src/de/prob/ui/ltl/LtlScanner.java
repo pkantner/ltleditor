@@ -38,7 +38,7 @@ public class LtlScanner extends AbstractPartitionScanner {
 		for (String symbol : LtlLexer.getBooleanOperatorsSymbols()) {
 			allowedCharacters.add(symbol);
 		}
-		for (String symbol : new String[]{" ", "\n", "\t", "\r", "/"}) {
+		for (String symbol : new String[]{" ", "\n", "\t", "\r", "/", "<", ">"}) {
 			allowedCharacters.add(symbol);
 		}
 
@@ -62,6 +62,9 @@ public class LtlScanner extends AbstractPartitionScanner {
 
 	private void addKeywordsRule(List<String> allowedCharacters) {
 		for (String word : LtlLexer.getKeywords()) {
+			addRule(new ReservedWordRule(word, new Token(LTL_KEYWORDS), allowedCharacters));
+		}
+		for (String word : LtlLexer.getScopes()) {
 			addRule(new ReservedWordRule(word, new Token(LTL_KEYWORDS), allowedCharacters));
 		}
 

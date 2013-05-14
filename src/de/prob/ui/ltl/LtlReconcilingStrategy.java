@@ -31,11 +31,6 @@ public class LtlReconcilingStrategy implements IReconcilingStrategy, IReconcilin
 	}
 
 	@Override
-	public void setDocument(IDocument document) {
-		// IGNORE
-	}
-
-	@Override
 	public void reconcile(DirtyRegion dirtyRegion, IRegion region) {
 		reconcile(region);
 	}
@@ -52,11 +47,6 @@ public class LtlReconcilingStrategy implements IReconcilingStrategy, IReconcilin
 		reconcile(null);
 	}
 
-	@Override
-	public void setProgressMonitor(IProgressMonitor arg0) {
-		// IGNORE
-	}
-
 	protected Position getAnnotationPosition(Token token, int line, int posInLine) {
 		int offset = 0;
 		int length = 0;
@@ -65,7 +55,7 @@ public class LtlReconcilingStrategy implements IReconcilingStrategy, IReconcilin
 			length = token.getStopIndex() - offset + 1;
 		} else {
 			try {
-				offset = textViewer.getSourceViewer().getDocument().getLineOffset(line) + posInLine;
+				offset = textViewer.getSourceViewer().getDocument().getLineOffset(line - 1) + posInLine;
 				length = 1;
 			} catch (BadLocationException ex) {
 			}
@@ -120,6 +110,16 @@ public class LtlReconcilingStrategy implements IReconcilingStrategy, IReconcilin
 		ParseTree ast = parser.start();
 		parser.semanticCheck(ast);
 		System.out.println("--------------------------------------------------------------");
+	}
+
+	@Override
+	public void setDocument(IDocument document) {
+		// IGNORE
+	}
+
+	@Override
+	public void setProgressMonitor(IProgressMonitor arg0) {
+		// IGNORE
 	}
 
 }
