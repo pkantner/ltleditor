@@ -1,4 +1,4 @@
-package de.prob.ui.ltl.annotation;
+package de.prob.ui.viewer.annotation;
 
 import org.eclipse.jface.text.DefaultInformationControl;
 import org.eclipse.jface.text.IInformationControl;
