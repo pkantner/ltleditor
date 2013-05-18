@@ -2,6 +2,7 @@ package de.prob.ui.viewer;
 
 import org.eclipse.jface.text.presentation.IPresentationReconciler;
 import org.eclipse.jface.text.presentation.PresentationReconciler;
+import org.eclipse.jface.text.reconciler.IReconciler;
 import org.eclipse.jface.text.rules.DefaultDamagerRepairer;
 import org.eclipse.jface.text.rules.ITokenScanner;
 import org.eclipse.jface.text.source.ISharedTextColors;
@@ -15,6 +16,7 @@ public abstract class AbstractSourceViewerConfiguration extends SourceViewerConf
 	protected AbstractPartitionScanner partitionScanner;
 	protected ISharedTextColors colorProvider;
 	protected PresentationReconciler presentationReconciler;
+	protected IReconciler reconciler;
 
 	public void addDamagerRepairer(ITokenScanner scanner, String contentType) {
 		if (presentationReconciler != null) {
@@ -49,6 +51,16 @@ public abstract class AbstractSourceViewerConfiguration extends SourceViewerConf
 		return super.getPresentationReconciler(sourceViewer);
 	}
 
+	@Override
+	public IReconciler getReconciler(ISourceViewer sourceViewer) {
+		if (reconciler != null) {
+			reconciler.install(sourceViewer);
+			return reconciler;
+		}
+		return super.getReconciler(sourceViewer);
+	}
+
+
 	public AbstractPartitionScanner getPartitionScanner() {
 		return partitionScanner;
 	}
@@ -77,6 +89,14 @@ public abstract class AbstractSourceViewerConfiguration extends SourceViewerConf
 		if (partitionScanner != null) {
 			presentationReconciler.setDocumentPartitioning(partitionScanner.getPartitionType());
 		}
+	}
+
+	public IReconciler getReconciler() {
+		return reconciler;
+	}
+
+	public void setReconciler(IReconciler reconciler) {
+		this.reconciler = reconciler;
 	}
 
 }

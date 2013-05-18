@@ -33,19 +33,17 @@ public class StyledTextViewer {
 	private boolean lineNumbersVisible = false;
 	private LineNumberRulerColumn lineNumberRulerColumn;
 
-	public StyledTextViewer(Composite parent, SourceViewerConfiguration config) {
-		this(parent, config,  SWT.V_SCROLL | SWT.H_SCROLL | SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
+	public StyledTextViewer(Composite parent) {
+		this(parent,  SWT.V_SCROLL | SWT.H_SCROLL | SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
 	}
 
-	public StyledTextViewer(Composite parent, SourceViewerConfiguration config, int styles) {
-		this.config = config;
+	public StyledTextViewer(Composite parent, int styles) {
 		document = new Document();
 
 		verticalRuler = new CompositeRuler();
 		sourceViewer = new SourceViewer(parent, verticalRuler, null, true, styles);
 
 		sourceViewer.setDocument(document);
-		sourceViewer.configure(this.config);
 		setFont(new Font(Display.getCurrent(), DEFAULT_FONT_NAME, DEFAULT_FONT_SIZE, SWT.NORMAL));
 
 		annotationManager = new AnnotationManager(sourceViewer, verticalRuler);
@@ -109,6 +107,11 @@ public class StyledTextViewer {
 
 	public SourceViewerConfiguration getSourceViewerConfiguration() {
 		return config;
+	}
+
+	public void setSourceViewerConfiguration(SourceViewerConfiguration config) {
+		this.config = config;
+		sourceViewer.configure(this.config);
 	}
 
 	public AnnotationManager getAnnotationManager() {
