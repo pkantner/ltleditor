@@ -20,13 +20,16 @@ public class LtlCheckingView extends ViewPart {
 		container = new Composite(parent, SWT.NULL);
 		container.setLayout(new GridLayout(1, true));
 
-		textViewer = new StyledTextViewer(container);
+		LtlSourceViewerConfiguration config = new LtlSourceViewerConfiguration();
+
+		textViewer = new StyledTextViewer(container, config);
 		textViewer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		textViewer.setPartitionScanner(config.getPartitionScanner());
 		textViewer.setAnnotationsVisible(true);
 		textViewer.setLineNumbersVisible(true);
-		//textViewer.setPartitionScanner(new LtlScanner());
-		//textViewer.setReconciler(new MonoReconciler(new LtlReconcilingStrategy(textViewer), false));
-		textViewer.setText("/*\na\nb\nc\n*/\ntrue and// d\n false");
+
+		// Examples: Can be removed
+		textViewer.setText("/* This is\n   a multiple line\n   comment.\n*/\nGF(true) =>// Single line comment\ntrue or false");
 		textViewer.getAnnotationManager().addAnnotation(new ErrorAnnotation("Test", 5, 2));
 		textViewer.getAnnotationManager().addAnnotation(new ErrorAnnotation("Test2", 10, 2));
 		textViewer.getAnnotationManager().addAnnotation(new WarningAnnotation("W", 10, 2));

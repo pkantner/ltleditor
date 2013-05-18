@@ -29,14 +29,10 @@ public abstract class AbstractAnnotation extends Annotation implements IAnnotati
 	}
 
 	public abstract Color getColor();
-
 	public abstract Image getImage();
-
 	@Override
 	public abstract int getLayer();
-
 	public abstract IDrawingStrategy getDrawingStrategy();
-
 	public abstract ITextStyleStrategy getTextStyleStrategy();
 
 	public Position getPosition() {

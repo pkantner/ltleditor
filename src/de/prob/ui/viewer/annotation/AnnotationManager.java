@@ -63,6 +63,7 @@ public class AnnotationManager {
 
 	public void addAnnotation(AbstractAnnotation annotation) {
 		if (!registeredAnnotations.contains(annotation.getType())) {
+			// Automatic registering of annotation types
 			registerAnnotationType(annotation);
 			registeredAnnotations.add(annotation.getType());
 		}
