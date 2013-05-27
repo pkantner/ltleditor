@@ -1,8 +1,5 @@
 package de.prob.ui.ltl.pattern;
 
-import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -15,21 +12,17 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
+import org.eclipse.ui.part.ViewPart;
 
 import de.prob.ui.ltleditor.Activator;
 
-public class PatternManagerDialog extends Dialog implements ISelectionChangedListener {
-
-	public static final int DEFAULT_WIDTH = 600;
-	public static final int DEFAULT_HEIGHT = 400;
+public class PatternManagerView extends ViewPart implements ISelectionChangedListener {
 
 	public static final Image IMAGE_PATTERN = Activator.getImageDescriptor("icons/pattern.png").createImage();
 	public static final Image IMAGE_BUILTIN_PATTERN = Activator.getImageDescriptor("icons/builtin_pattern.png").createImage();
@@ -40,7 +33,6 @@ public class PatternManagerDialog extends Dialog implements ISelectionChangedLis
 
 	private PatternManager patternManager;
 
-	private Label titleLabel;
 	private TableViewer patternTableViewer;
 	private Text descriptionText;
 	private Text codeText;
@@ -50,9 +42,7 @@ public class PatternManagerDialog extends Dialog implements ISelectionChangedLis
 	private ToolItem removePatternItem;
 	private ToolItem copyPatternItem;
 
-	public PatternManagerDialog(Shell parentShell) {
-		super(parentShell);
-
+	public PatternManagerView() {
 		patternManager = new PatternManager();
 		PatternInfo pattern1 = new PatternInfo("absence", 1);
 		pattern1.setDescription("Example description");
@@ -65,24 +55,20 @@ public class PatternManagerDialog extends Dialog implements ISelectionChangedLis
 		patternManager.add(pattern2);
 	}
 
-	protected void createTitle(Composite parent) {
-		// Title label
-		titleLabel = new Label(parent, SWT.NONE);
-		GridData data = new GridData(GridData.FILL_HORIZONTAL);
-		data.verticalIndent = IDialogConstants.VERTICAL_MARGIN;
-		data.horizontalIndent = IDialogConstants.HORIZONTAL_MARGIN;
-		data.horizontalSpan = 3;
-		data.widthHint = DEFAULT_WIDTH;
-		titleLabel.setLayoutData(data);
-		titleLabel.setFont(JFaceResources.getHeaderFont());
-		titleLabel.setText("Pattern manager");
+	@Override
+	public void createPartControl(Composite parent) {
+		GridLayout layout = new GridLayout(3, false);
+		layout.marginHeight = 0;
+		layout.marginWidth = 0;
+		layout.verticalSpacing = 0;
+		layout.horizontalSpacing = 0;
+		parent.setLayout(layout);
 
-		// Bottom separator
-		Label separator = new Label(parent, SWT.HORIZONTAL | SWT.SEPARATOR);
-		data = new GridData(GridData.FILL_HORIZONTAL);
-		data.verticalIndent = IDialogConstants.VERTICAL_MARGIN;
-		data.horizontalSpan = 3;
-		separator.setLayoutData(data);
+		// Content
+		createPatternTable(parent);
+		createDescriptionAndCode(parent);
+
+		selectionChanged(null);
 	}
 
 	protected void createPatternTable(Composite parent) {
@@ -92,11 +78,11 @@ public class PatternManagerDialog extends Dialog implements ISelectionChangedLis
 		layout.marginWidth = 0;
 		layout.verticalSpacing = 0;
 		tableComposite.setLayout(layout);
+		tableComposite.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 
 		patternTableViewer = new TableViewer(tableComposite, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 		GridData data = new GridData(GridData.FILL_VERTICAL);
 		data.widthHint = 200;
-		data.heightHint = DEFAULT_HEIGHT;
 		Table table = patternTableViewer.getTable();
 		table.setLayoutData(data);
 		table.setHeaderVisible(true);
@@ -195,57 +181,14 @@ public class PatternManagerDialog extends Dialog implements ISelectionChangedLis
 	}
 
 	@Override
-	protected Control createDialogArea(Composite parent) {
-		// Dialog area
-		Composite control = new Composite(parent, SWT.NONE);
-		GridLayout layout = new GridLayout(3, false);
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
-		layout.verticalSpacing = 0;
-		layout.horizontalSpacing = 0;
-		control.setLayout(layout);
-
-		// Title
-		createTitle(control);
-		// Content
-		createPatternTable(control);
-		createDescriptionAndCode(control);
-
-		selectionChanged(null);
-
-		return control;
-	}
-
-	@Override
-	protected Control createButtonBar(Composite parent) {
-		Composite control = new Composite(parent, SWT.NONE);
-		GridLayout layout = new GridLayout(1, false);
-		layout.marginHeight = 0;
-		layout.marginWidth = 0;
-		layout.verticalSpacing = 0;
-		control.setLayout(layout);
-		control.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-		// Top separator
-		Label separator = new Label(control, SWT.HORIZONTAL | SWT.SEPARATOR);
-		separator.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-		// Composite for buttons
-		Composite buttonBarComposite = new Composite(control, SWT.NONE);
-		buttonBarComposite.setLayout(new GridLayout(1, false));
-		buttonBarComposite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_END));
-
-		// Create buttons
-		createButtonsForButtonBar(buttonBarComposite);
-
-		return control;
+	public void setFocus() {
+		patternTableViewer.getControl().setFocus();
 	}
 
 	@Override
 	public void selectionChanged(SelectionChangedEvent event) {
 		IStructuredSelection selection = (IStructuredSelection) patternTableViewer.getSelection();
 		if (selection.size() == 0) {
-			titleLabel.setText("Pattern manager");
 			descriptionText.setText("");
 			codeText.setText("");
 
@@ -255,7 +198,6 @@ public class PatternManagerDialog extends Dialog implements ISelectionChangedLis
 		} else if (selection.size() == 1) {
 			PatternInfo pattern = (PatternInfo) selection.getFirstElement();
 
-			titleLabel.setText(pattern.getName());
 			descriptionText.setText(pattern.getDescription());
 			codeText.setText(pattern.getCode());
 
@@ -263,7 +205,6 @@ public class PatternManagerDialog extends Dialog implements ISelectionChangedLis
 			removePatternItem.setEnabled(!pattern.isLocked());
 			copyPatternItem.setEnabled(true);
 		} else {
-			titleLabel.setText("Pattern manager");
 			descriptionText.setText("");
 			codeText.setText("");
 

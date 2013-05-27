@@ -27,6 +27,14 @@
             name="LTL Model Checking"
             restorable="true">
       </view>
+      <view
+            allowMultiple="false"
+            class="de.prob.ui.ltl.pattern.PatternManagerView"
+            icon="icons/pattern.png"
+            id="de.prob.ui.ltl.pattern.PatternManagerView"
+            name="Pattern manager"
+            restorable="true">
+      </view>
    </extension>
 
 </plugin>

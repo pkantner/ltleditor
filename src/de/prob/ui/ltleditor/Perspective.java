@@ -1,6 +1,6 @@
 package de.prob.ui.ltleditor;
 
-import org.eclipse.swt.SWT;
+import org.eclipse.ui.IFolderLayout;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPerspectiveFactory;
 
@@ -10,7 +10,9 @@ public class Perspective implements IPerspectiveFactory {
 	public void createInitialLayout(IPageLayout layout) {
 		layout.setEditorAreaVisible(false);
 
-		layout.addView("de.prob.ui.ltl.LtlCheckingView", SWT.TOP, 1.0f, layout.getEditorArea());
+		IFolderLayout folder = layout.createFolder("left", IPageLayout.LEFT, 0.35f, layout.getEditorArea());
+		folder.addView("de.prob.ui.ltl.LtlCheckingView");
+		folder.addView("de.prob.ui.ltl.pattern.PatternManagerView");
 	}
 
 }
