@@ -9,10 +9,14 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Sash;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
@@ -33,6 +37,7 @@ public class PatternManagerView extends ViewPart implements ISelectionChangedLis
 
 	private PatternManager patternManager;
 
+	private Composite tableComposite;
 	private TableViewer patternTableViewer;
 	private Text descriptionText;
 	private Text codeText;
@@ -56,7 +61,7 @@ public class PatternManagerView extends ViewPart implements ISelectionChangedLis
 	}
 
 	@Override
-	public void createPartControl(Composite parent) {
+	public void createPartControl(final Composite parent) {
 		GridLayout layout = new GridLayout(3, false);
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
@@ -64,25 +69,51 @@ public class PatternManagerView extends ViewPart implements ISelectionChangedLis
 		layout.horizontalSpacing = 0;
 		parent.setLayout(layout);
 
-		// Content
+		// Patterns
 		createPatternTable(parent);
+
+		// Sash
+		final int limit = 20;
+		final Sash sash = new Sash(parent, SWT.VERTICAL);
+		sash.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+		sash.addListener (SWT.Selection, new Listener () {
+			@Override
+			public void handleEvent (Event e) {
+				Rectangle sashRect = sash.getBounds ();
+				Rectangle parentRect = parent.getClientArea ();
+				int right = parentRect.width - sashRect.width - limit;
+				e.x = Math.max (Math.min (e.x, right), limit);
+				if (e.x != sashRect.x)  {
+					((GridData) tableComposite.getLayoutData()).widthHint = e.x;
+					parent.layout();
+				}
+			}
+		});
+
+		// Description and code
 		createDescriptionAndCode(parent);
 
+		// Add items
+		patternTableViewer.setInput(patternManager.getPatterns());
+		if (patternTableViewer.getTable().getItemCount() > 0) {
+			patternTableViewer.getTable().select(0);
+		}
 		selectionChanged(null);
 	}
 
 	protected void createPatternTable(Composite parent) {
-		Composite tableComposite = new Composite(parent, SWT.NONE);
-		GridLayout layout = new GridLayout(1, true);
+		tableComposite = new Composite(parent, SWT.NONE);
+		GridLayout layout = new GridLayout(2, false);
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
 		layout.verticalSpacing = 0;
+		layout.horizontalSpacing = 0;
 		tableComposite.setLayout(layout);
 		tableComposite.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 
 		patternTableViewer = new TableViewer(tableComposite, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
-		GridData data = new GridData(GridData.FILL_VERTICAL);
-		data.widthHint = 200;
+		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
+		data.widthHint = 183;
 		Table table = patternTableViewer.getTable();
 		table.setLayoutData(data);
 		table.setHeaderVisible(true);
@@ -122,11 +153,14 @@ public class PatternManagerView extends ViewPart implements ISelectionChangedLis
 
 		});
 
-		// Add items
-		patternTableViewer.setInput(patternManager.getPatterns());
+		// Right separator
+		Label separator = new Label(tableComposite, SWT.VERTICAL | SWT.SEPARATOR);
+		data = new GridData(GridData.HORIZONTAL_ALIGN_END | GridData.FILL_VERTICAL);
+		data.verticalSpan = 3;
+		separator.setLayoutData(data);
 
-		// Separator
-		Label separator = new Label(tableComposite, SWT.HORIZONTAL | SWT.SEPARATOR);
+		// Bottom separator
+		separator = new Label(tableComposite, SWT.HORIZONTAL | SWT.SEPARATOR);
 		separator.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
 		// Toolbar
@@ -156,10 +190,6 @@ public class PatternManagerView extends ViewPart implements ISelectionChangedLis
 	}
 
 	protected void createDescriptionAndCode(Composite parent) {
-		// Left separator
-		Label separator = new Label(parent, SWT.VERTICAL | SWT.SEPARATOR);
-		separator.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-
 		// Description and code
 		Composite contentComposite = new Composite(parent, SWT.NONE);
 		contentComposite.setLayout(new GridLayout(1, false));
@@ -195,6 +225,8 @@ public class PatternManagerView extends ViewPart implements ISelectionChangedLis
 			editPatternItem.setEnabled(false);
 			removePatternItem.setEnabled(false);
 			copyPatternItem.setEnabled(false);
+			descriptionText.setEnabled(false);
+			codeText.setEnabled(false);
 		} else if (selection.size() == 1) {
 			PatternInfo pattern = (PatternInfo) selection.getFirstElement();
 
@@ -204,6 +236,8 @@ public class PatternManagerView extends ViewPart implements ISelectionChangedLis
 			editPatternItem.setEnabled(!pattern.isLocked());
 			removePatternItem.setEnabled(!pattern.isLocked());
 			copyPatternItem.setEnabled(true);
+			descriptionText.setEnabled(true);
+			codeText.setEnabled(true);
 		} else {
 			descriptionText.setText("");
 			codeText.setText("");
@@ -211,6 +245,8 @@ public class PatternManagerView extends ViewPart implements ISelectionChangedLis
 			editPatternItem.setEnabled(false);
 			removePatternItem.setEnabled(true);
 			copyPatternItem.setEnabled(false);
+			descriptionText.setEnabled(false);
+			codeText.setEnabled(false);
 		}
 	}
 
